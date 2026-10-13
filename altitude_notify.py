@@ -86,7 +86,11 @@ def refresh_snapshot():
         print("snapshot failed:", res.returncode, res.stderr.strip())
         return None
     lines = res.stdout.strip().splitlines()
-    return lines[-1] if lines else None
+    name = lines[-1] if lines else ""
+    if not name.endswith(".log"):
+        print("snapshot returned no filename:", res.stdout.strip()[-200:])
+        return None
+    return name
 
 
 def get_source():
@@ -165,6 +169,9 @@ def follow():
         print("No log file found in", LOG_DIR)
         return
     callsign = find_callsign(src)
+    if callsign is None:
+        print("No callsign found in", name)
+        return
     print(f"Monitoring as {callsign} ({name})")
     send_telegram(f"Monitoring as {callsign}")
 
