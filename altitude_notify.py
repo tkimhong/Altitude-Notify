@@ -127,6 +127,25 @@ def should_forward(line, callsign):
     return False
 
 
+def format_freq(freq):
+    if len(freq) == 6 and freq.isdigit():
+        return f"{freq[:3]}.{freq[3:]}"
+    return freq
+
+
+def format_notification(line):
+    tail = line.split("[INF] ", 1)[-1]
+    if tail.startswith("PRIV_MSG from "):
+        sender, _, rest = tail[len("PRIV_MSG from ") :].partition(" to ")
+        body = rest.partition(": ")[2]
+        return f"{sender}: {body}"
+    if tail.startswith("FREQ_MSG from "):
+        sender, _, rest = tail[len("FREQ_MSG from ") :].partition(" to ")
+        freq, _, body = rest.partition(": ")
+        return f"{sender} ({format_freq(freq)}): {body}"
+    return line
+
+
 def send_telegram(text):
     if DRY_RUN:
         print("[DRY_RUN]", text)
@@ -203,7 +222,7 @@ def follow():
             line = line.rstrip("\r")
             if should_forward(line, callsign):
                 print("->", line)
-                send_telegram(line)
+                send_telegram(format_notification(line))
 
 
 def main():
